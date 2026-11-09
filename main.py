@@ -10,7 +10,7 @@ print move indicators
 add score gui???
 Turn system
 """
-
+print("test")
 # Setup of the Game Window
 pygame.init()
 
