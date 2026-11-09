@@ -4,13 +4,11 @@ import random
 
 """
 TO DO
-
+winner screen
 double jumps
-Promotion
 print move indicators
 add score gui???
 Turn system
-Fix bug where the force capture activates when a piece is on the side of the board making it impossible to capture
 """
 
 # Setup of the Game Window
@@ -71,8 +69,7 @@ def draw_pieces():
             if piece != 0:
                 x = col * TILE_SIZE + 5
                 y = row * TILE_SIZE + 5
-                radius = TILE_SIZE // 2 - 10
-
+                
                 if piece == 1:
                     screen.blit(dark_pieces_image, (x, y))
                 elif piece == 2:
@@ -98,7 +95,10 @@ def move_piece(start_row, start_col, end_row, end_col):
     if is_capture(start_row, start_col, end_row, end_col, piece):
         board_state[(start_row + end_row) // 2][(start_col + end_col) // 2] = 0
     
-    board_state[end_row][end_col] = piece
+    if is_promotion(end_row, piece):
+        board_state[end_row][end_col] = piece + 2
+    else:
+        board_state[end_row][end_col] = piece
 
 def is_legal_move(start_row, start_col, end_row, end_col, piece=0):
     # Checks if the proposed move is legal and returns True if it is legal and False if it isn't
@@ -193,6 +193,14 @@ def end_turn():
     if len(legal_moves) == 0:
         game_over = True
         winner = 1 if current_player == 2 else 2
+
+def is_promotion(end_row, piece):
+    if piece == 1 or piece == 2:
+        if piece == 1 and end_row == 0:
+            return True
+        if piece == 2 and end_row == ROWS - 1:
+            return True
+    return False
 
 
 # Setup of the Game Loop
