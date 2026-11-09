@@ -6,6 +6,7 @@ import random
 TO DO
 winner screen
 double jumps
+Big chungus
 print move indicators
 add score gui???
 Turn system
