@@ -1,7 +1,7 @@
 import pygame
 import sys
 import random
-
+# test comment
 """
 TO DO
 winner screen
@@ -69,7 +69,7 @@ def draw_pieces():
             if piece != 0:
                 x = col * TILE_SIZE + 5
                 y = row * TILE_SIZE + 5
-                
+
                 if piece == 1:
                     screen.blit(dark_pieces_image, (x, y))
                 elif piece == 2:
