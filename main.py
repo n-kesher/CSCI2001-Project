@@ -46,8 +46,6 @@ board_state = [
     [1, 0, 1, 0, 1 ,0, 1, 0] 
     ]
 
-
-
 # Game Functions
 def draw_board():
     # Draws the squares on the board
@@ -69,7 +67,7 @@ def draw_pieces():
             if piece != 0:
                 x = col * TILE_SIZE + 5
                 y = row * TILE_SIZE + 5
-                
+
                 if piece == 1:
                     screen.blit(dark_pieces_image, (x, y))
                 elif piece == 2:
@@ -157,6 +155,9 @@ def get_legal_moves(player):
             # Only look at this player's pieces
             if piece != player and piece != player + 2:
                 continue
+            # If the forced piece is not empty (avaliable multi-jump) then only that piece can move
+            if forced_piece is not None and (row, col) != forced_piece:
+                continue
 
             for row_delta, col_delta in offsets:
                 end_row, end_col = row + row_delta, col + col_delta
@@ -176,17 +177,18 @@ def get_legal_moves(player):
                 else:
                     simple.append(move)
 
-    # Return captures with priority over the simple moves
+    # Return captures with priority over the simple moves, and if the forced piece is not None, then we have to send only the captures
+    if forced_piece is not None:
+        return captures
     return captures if captures else simple
 
 def ai_move():
-    move = random.choice(legal_moves)
-    move_piece(*move)
-    end_turn()
+    perform_move(random.choice(legal_moves))
 
 def end_turn():
-    global current_player, legal_moves, selected_piece, game_over, winner
+    global current_player, legal_moves, selected_piece, game_over, winner, forced_piece
     selected_piece = None
+    forced_piece = None
     current_player = 2 if current_player == 1 else 1
     legal_moves = get_legal_moves(current_player)
 
@@ -202,11 +204,47 @@ def is_promotion(end_row, piece):
             return True
     return False
 
+def has_capture(row, col):
+    # Checks if a piece on a square has a capture
+    piece = board_state[row][col]
+    # Checks every possible offset which could be a capture 
+    for row_delta, col_delta in [(-2, -2), (-2, 2), (2, -2), (2, 2)]:
+        end_row, end_col = row + row_delta, col + col_delta
+        # Skip the impossible squares
+        if not (0 <= end_row < ROWS and 0 <= end_col < COLS):
+            continue
+        # If the move is legal and it is a capture then return True
+        if is_legal_move(row, col, end_row, end_col, piece) and is_capture(row, col, end_row, end_col, piece): 
+            return True
+    return False
+
+def perform_move(move):
+    # Using the move_piece() and end_turn() functions. Important to allow double jumps
+    global forced_piece, selected_piece, legal_moves
+    start_row, start_col, end_row, end_col = move
+
+    # Seeing if the previous move was a capture
+    old_piece = board_state[start_row][start_col]
+    was_capture = is_capture(start_row, start_col, end_row, end_col, old_piece)
+
+    move_piece(*move)
+
+    # We have to check if if the piece was just promoted
+    promoted = board_state[end_row][end_col] != old_piece
+
+    # Keep the turn only if this was a capture, the piece wasn't just promoted, and it can capture again from where it landed
+    if was_capture and not promoted and has_capture(end_row, end_col):
+        forced_piece = (end_row, end_col)
+        selected_piece = forced_piece
+        legal_moves = get_legal_moves(current_player)
+    else:
+        end_turn()
 
 # Setup of the Game Loop
 run = True
 current_player = 1                       
 player_types = {1: "human", 2: "human"}
+forced_piece = None
 legal_moves = get_legal_moves(current_player)
 selected_piece = None
 game_over = False
@@ -228,14 +266,15 @@ while run:
                     # If there is a current selected piece, it moves the piece to the clicked location, otherwise it sets a new selected piece
                     if selected_piece == None:
                         if board_state[row][col] == current_player or board_state[row][col] == current_player + 2:
-                            selected_piece = (row, col)
+                            if forced_piece is None or (row, col) == forced_piece:
+                                selected_piece = (row, col)
                     else:
+                        # Move making logic
                         move = selected_piece[0], selected_piece[1], row, col
                         if move in legal_moves:
-                            move_piece(*move)
-                            end_turn()
+                            perform_move(move)
                         else:
-                            selected_piece = None
+                            selected_piece = forced_piece
 
     if not game_over and player_types[current_player] == "ai":
         pygame.time.wait(500)
