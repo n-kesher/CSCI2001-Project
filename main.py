@@ -5,10 +5,7 @@ import random
 """
 TO DO
 winner screen
-double jumps
-print move indicators
 add score gui???
-Turn system
 """
 
 # Setup of the Game Window
@@ -22,7 +19,8 @@ HEIGHT = ROWS * TILE_SIZE
 # Game Parameters
 LIGHT_SQUARE = (237, 214, 176)
 DARK_SQUARE = (184, 135, 98)
-HIGHLIGHT_COLOR = (219, 195, 74)
+SELECTED_HIGHLIGHT_COLOR = (219, 195, 74)
+LAST_MOVE_HIGHLIGHT_COLOR = (0, 187, 255)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Checkers!")
@@ -32,7 +30,6 @@ light_pieces_image = pygame.transform.scale(pygame.image.load("sprites/white.png
 light_king_image = pygame.transform.scale(pygame.image.load("sprites/white_king.png").convert_alpha(), (TILE_SIZE - 10, TILE_SIZE - 10))
 dark_pieces_image = pygame.transform.scale(pygame.image.load("sprites/black.png").convert_alpha(), (TILE_SIZE - 10, TILE_SIZE - 10))
 dark_king_image = pygame.transform.scale(pygame.image.load("sprites/black_king.png").convert_alpha(), (TILE_SIZE - 10, TILE_SIZE - 10))
-move_indicator_image = pygame.image.load("sprites/move_indicator.png").convert_alpha()
 
 # Setting up the starting board state. 0 = empty, 1 = player 1, and 2 = player 2. 3 and 4 are player 1 and 2 but a king piece
 board_state = [
@@ -76,6 +73,22 @@ def draw_pieces():
                     screen.blit(dark_king_image, (x, y))
                 elif piece == 4:
                     screen.blit(light_king_image, (x, y))
+
+def draw_highlight():
+        if selected_piece is not None:
+            row, col = selected_piece
+            rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+            pygame.draw.rect(screen, SELECTED_HIGHLIGHT_COLOR, rect)
+
+
+def draw_last_move():
+
+    if last_move is not None:
+        start_row, start_col, end_row, end_col = last_move
+
+        for row, col in [(start_row, start_col), (end_row, end_col)]:
+            rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)            
+            pygame.draw.rect(screen, LAST_MOVE_HIGHLIGHT_COLOR, rect)
 
 def get_square_from_mouse(pos):
     # Returns the row and col that the mouse is on
@@ -216,11 +229,11 @@ def has_capture(row, col):
         # If the move is legal and it is a capture then return True
         if is_legal_move(row, col, end_row, end_col, piece) and is_capture(row, col, end_row, end_col, piece): 
             return True
-    return False
+    return False    
 
 def perform_move(move):
     # Using the move_piece() and end_turn() functions. Important to allow double jumps
-    global forced_piece, selected_piece, legal_moves
+    global forced_piece, selected_piece, legal_moves, last_move
     start_row, start_col, end_row, end_col = move
 
     # Seeing if the previous move was a capture
@@ -228,7 +241,7 @@ def perform_move(move):
     was_capture = is_capture(start_row, start_col, end_row, end_col, old_piece)
 
     move_piece(*move)
-
+    last_move = move
     # We have to check if if the piece was just promoted
     promoted = board_state[end_row][end_col] != old_piece
 
@@ -245,6 +258,7 @@ run = True
 current_player = 1                       
 player_types = {1: "human", 2: "human"}
 forced_piece = None
+last_move = None
 legal_moves = get_legal_moves(current_player)
 selected_piece = None
 game_over = False
@@ -284,6 +298,8 @@ while run:
     screen.fill((0, 0, 0))
 
     draw_board()
+    draw_highlight()
+    draw_last_move()
     draw_pieces()
 
 
