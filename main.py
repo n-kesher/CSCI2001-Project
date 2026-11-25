@@ -256,6 +256,7 @@ def perform_move(move):
 
 def game():
     # Performs the main gameloop
+    global selected_piece
     while run:
         # Setup of the Event Handler
         for event in pygame.event.get():
