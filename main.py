@@ -5,7 +5,9 @@ import random
 """
 TO DO
 winner screen
-add score gui???
+Keep scores
+Draws
+menus of some kind
 """
 
 # Setup of the Game Window
