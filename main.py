@@ -5,9 +5,8 @@ import random
 """
 TO DO
 winner screen
-Keep scores
-Draws
-menus of some kind
+piece sounds?
+ai moves
 """
 
 # Setup of the Game Window
@@ -25,7 +24,7 @@ SELECTED_HIGHLIGHT_COLOR = (219, 195, 74)
 LAST_MOVE_HIGHLIGHT_COLOR = (0, 187, 255)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Checkers!")
+pygame.display.set_caption("checkers")
 
 # Initializing the Sprites
 light_pieces_image = pygame.transform.scale(pygame.image.load("sprites/white.png").convert_alpha(), (TILE_SIZE - 10, TILE_SIZE - 10))
@@ -255,6 +254,124 @@ def perform_move(move):
     else:
         end_turn()
 
+def game():
+    # Performs the main gameloop
+    global selected_piece
+    while run:
+        # Setup of the Event Handler
+        for event in pygame.event.get():
+            # Listen for pressing the X button
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            # Listen for Left Click and that the game isn't over and that the current player is a human
+            elif (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not game_over and player_types[current_player] == "human"):
+                    mouse_pos = pygame.mouse.get_pos()
+                    row, col = get_square_from_mouse(mouse_pos)
+
+                    # Check boundaries to ensure click was inside the grid
+                    if 0 <= row < ROWS and 0 <= col < COLS:
+                        # If there is a current selected piece, it moves the piece to the clicked location, otherwise it sets a new selected piece
+                        if selected_piece == None:
+                            if board_state[row][col] == current_player or board_state[row][col] == current_player + 2:
+                                if forced_piece is None or (row, col) == forced_piece:
+                                    selected_piece = (row, col)
+                        else:
+                            # Move making logic
+                            move = selected_piece[0], selected_piece[1], row, col
+                            if move in legal_moves:
+                                perform_move(move)
+                            else:
+                                selected_piece = forced_piece
+
+        if not game_over and player_types[current_player] == "ai":
+            pygame.time.wait(500)
+            ai_move()
+        
+        # Rendering
+        screen.fill((0, 0, 0))
+
+        draw_board()
+        draw_highlight()
+        draw_last_move()
+        draw_pieces()
+
+
+        pygame.display.update()
+
+def start_menu():
+    # Sets up the start menu that runs the game if the play button is pressed and so on
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.fill((0, 0, 0))
+    overlay.set_alpha(175)
+
+    font = pygame.font.SysFont("Arial", 60)
+
+    play_button = pygame.Rect(0, 0, 220, 80)
+    play_button.center = (WIDTH // 4, HEIGHT // 2)
+    play_text = font.render("play", True, (255, 255, 255))
+
+    quit_button = pygame.Rect(0, 0, 220, 80)
+    quit_button.center = (WIDTH * 3 // 4, HEIGHT // 2)
+    quit_text = font.render("quit", True, (255, 255, 255))
+
+    player_button = pygame.Rect(0, 0, 540, 80)
+    player_button.center = (WIDTH // 2, HEIGHT * 3 // 4)
+    label = "play vs: player"
+
+    title_text = font.render("checkers", True, (255, 255, 255))
+    title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+
+    while True:
+        # Event Handler
+        mouse = pygame.mouse.get_pos()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if play_button.collidepoint(mouse):
+                    game()
+
+                if quit_button.collidepoint(mouse):
+                    pygame.quit()
+                    sys.exit()
+                
+                if player_button.collidepoint(mouse):
+                    if label == "play vs: player":
+                        label = "play vs: ai"
+                        player_types[2] = "ai"
+                    else:
+                        label = "play vs: player"
+                        player_types[2] = "human"
+        # Rendering
+        draw_board()
+        draw_pieces()
+        screen.blit(overlay, (0, 0))
+
+        # Title
+        screen.blit(title_text, title_rect)
+
+        # Buttons
+        pygame.draw.rect(screen, (0, 0, 0), play_button, border_radius=0)
+        pygame.draw.rect(screen, (255, 255, 255), play_button, width=3)
+        screen.blit(play_text, play_text.get_rect(center=play_button.center))
+
+        pygame.draw.rect(screen, (0, 0, 0), quit_button, border_radius=0)
+        pygame.draw.rect(screen, (255, 255, 255), quit_button, width=3)
+        screen.blit(quit_text, quit_text.get_rect(center=quit_button.center))
+
+        player_text = font.render(label, True, (255, 255, 255))
+
+        pygame.draw.rect(screen, (0, 0, 0), player_button, border_radius=0)
+        pygame.draw.rect(screen, (255, 255, 255), player_button, width=3)
+        screen.blit(player_text, player_text.get_rect(center=player_button.center))
+
+        pygame.display.update()
+
 # Setup of the Game Loop
 run = True
 current_player = 1                       
@@ -265,46 +382,5 @@ legal_moves = get_legal_moves(current_player)
 selected_piece = None
 game_over = False
 winner = None
-while run:
-    # Setup of the Event Handler
-    for event in pygame.event.get():
-        # Listen for pressing the X button
-        if event.type == pygame.QUIT:
-            run = False
 
-        # Listen for Left Click and that the game isn't over and that the current player is a human
-        elif (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not game_over and player_types[current_player] == "human"):
-                mouse_pos = pygame.mouse.get_pos()
-                row, col = get_square_from_mouse(mouse_pos)
-
-                # Check boundaries to ensure click was inside the grid
-                if 0 <= row < ROWS and 0 <= col < COLS:
-                    # If there is a current selected piece, it moves the piece to the clicked location, otherwise it sets a new selected piece
-                    if selected_piece == None:
-                        if board_state[row][col] == current_player or board_state[row][col] == current_player + 2:
-                            if forced_piece is None or (row, col) == forced_piece:
-                                selected_piece = (row, col)
-                    else:
-                        # Move making logic
-                        move = selected_piece[0], selected_piece[1], row, col
-                        if move in legal_moves:
-                            perform_move(move)
-                        else:
-                            selected_piece = forced_piece
-
-    if not game_over and player_types[current_player] == "ai":
-        pygame.time.wait(500)
-        ai_move()
-    
-    # Rendering
-    screen.fill((0, 0, 0))
-
-    draw_board()
-    draw_highlight()
-    draw_last_move()
-    draw_pieces()
-
-
-    pygame.display.update()
-pygame.quit()
-
+start_menu()
