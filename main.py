@@ -256,7 +256,6 @@ def perform_move(move):
 
 def game():
     # Performs the main gameloop
-    global run, current_player, player_types, forced_piece, last_move, legal_moves, selected_piece, game_over, winner
     while run:
         # Setup of the Event Handler
         for event in pygame.event.get():
