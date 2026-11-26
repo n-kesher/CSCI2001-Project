@@ -27,6 +27,9 @@ DARK_SQUARE = (184, 135, 98)
 SELECTED_HIGHLIGHT_COLOR = (219, 195, 74)
 LAST_MOVE_HIGHLIGHT_COLOR = (0, 187, 255)
 
+icon = pygame.image.load("checkers_small.png")
+pygame.display.set_icon(icon)
+
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("checkers")
 
