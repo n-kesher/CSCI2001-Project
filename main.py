@@ -4,7 +4,6 @@ import random
 
 """
 TO DO
-winner screen
 piece sounds?
 ai moves
 """
@@ -16,6 +15,7 @@ ROWS, COLS = 8, 8
 TILE_SIZE = 80
 WIDTH = COLS * TILE_SIZE
 HEIGHT = ROWS * TILE_SIZE
+FONT = pygame.font.Font(pygame.font.match_font("arial"), 60)
 
 # Game Parameters
 LIGHT_SQUARE = (237, 214, 176)
@@ -95,6 +95,59 @@ def draw_last_move():
         for row, col in [(start_row, start_col), (end_row, end_col)]:
             rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)            
             pygame.draw.rect(screen, LAST_MOVE_HIGHLIGHT_COLOR, rect)
+
+def win_screen(winner):
+    if winner == 1:
+        label = "black wins!"
+    else:
+        label = "white wins!"
+
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.fill((0, 0, 0))
+    overlay.set_alpha(175)
+
+    winner_text = FONT.render(label, True, (255, 255, 255))
+    winner_rect = winner_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+
+    replay_button = pygame.Rect(0, 0, 220, 80)
+    replay_button.center = (WIDTH // 4, HEIGHT // 2)
+    replay_text = FONT.render("restart", True, (255, 255, 255))
+
+    quit_button = pygame.Rect(0, 0, 220, 80)
+    quit_button.center = (WIDTH * 3 // 4, HEIGHT // 2)
+    quit_text = FONT.render("quit", True, (255, 255, 255))
+
+    background = screen.copy()
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if replay_button.collidepoint(event.pos):
+                    reset_game()
+                    return  # back to game(), which keeps running with fresh state
+
+                if quit_button.collidepoint(event.pos):
+                    pygame.quit()
+                    sys.exit()
+
+        # Rendering
+        screen.blit(background, (0, 0))
+        screen.blit(overlay, (0, 0))
+        screen.blit(winner_text, winner_rect)
+
+        pygame.draw.rect(screen, (0, 0, 0), replay_button)
+        pygame.draw.rect(screen, (255, 255, 255), replay_button, width=3)
+        screen.blit(replay_text, replay_text.get_rect(center=replay_button.center))
+
+        pygame.draw.rect(screen, (0, 0, 0), quit_button)
+        pygame.draw.rect(screen, (255, 255, 255), quit_button, width=3)
+        screen.blit(quit_text, quit_text.get_rect(center=quit_button.center))
+
+        pygame.display.update()
 
 def get_square_from_mouse(pos):
     # Returns the row and col that the mouse is on
@@ -308,7 +361,31 @@ def game():
         draw_last_move()
         draw_pieces()
 
+        if game_over:
+            win_screen(winner)
+            
         pygame.display.update()
+
+def reset_game():
+    global board_state, current_player, forced_piece, last_move, legal_moves, selected_piece, game_over, winner
+    board_state = [
+        [0, 2, 0, 2, 0, 2, 0, 2],
+        [2, 0, 2, 0, 2 ,0, 2, 0],
+        [0, 2, 0, 2, 0, 2, 0, 2],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 0, 1, 0, 1 ,0, 1, 0],
+        [0, 1, 0, 1, 0, 1, 0, 1],  
+        [1, 0, 1, 0, 1 ,0, 1, 0] 
+        ]
+    current_player = 1
+    forced_piece = None
+    last_move = None
+    selected_piece = None
+    game_over = False
+    winner = None
+    legal_moves = get_legal_moves(current_player)
+
 
 def start_menu():
     # Sets up the start menu that runs the game if the play button is pressed and so on
@@ -316,21 +393,19 @@ def start_menu():
     overlay.fill((0, 0, 0))
     overlay.set_alpha(175)
 
-    font = pygame.font.SysFont("Arial", 60)
-
     play_button = pygame.Rect(0, 0, 220, 80)
     play_button.center = (WIDTH // 4, HEIGHT // 2)
-    play_text = font.render("play", True, (255, 255, 255))
+    play_text = FONT.render("play", True, (255, 255, 255))
 
     quit_button = pygame.Rect(0, 0, 220, 80)
     quit_button.center = (WIDTH * 3 // 4, HEIGHT // 2)
-    quit_text = font.render("quit", True, (255, 255, 255))
+    quit_text = FONT.render("quit", True, (255, 255, 255))
 
     player_button = pygame.Rect(0, 0, 540, 80)
     player_button.center = (WIDTH // 2, HEIGHT * 3 // 4)
     label = "play vs: player"
 
-    title_text = font.render("checkers", True, (255, 255, 255))
+    title_text = FONT.render("checkers", True, (255, 255, 255))
     title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
 
     while True:
@@ -374,13 +449,15 @@ def start_menu():
         pygame.draw.rect(screen, (255, 255, 255), quit_button, width=3)
         screen.blit(quit_text, quit_text.get_rect(center=quit_button.center))
 
-        player_text = font.render(label, True, (255, 255, 255))
+        player_text = FONT.render(label, True, (255, 255, 255))
 
         pygame.draw.rect(screen, (0, 0, 0), player_button, border_radius=0)
         pygame.draw.rect(screen, (255, 255, 255), player_button, width=3)
         screen.blit(player_text, player_text.get_rect(center=player_button.center))
 
         pygame.display.update()
+
+
 
 # Setup of the Game Loop
 run = True
