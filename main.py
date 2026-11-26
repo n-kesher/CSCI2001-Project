@@ -36,6 +36,8 @@ dark_king_image = pygame.transform.scale(pygame.image.load("sprites/black_king.p
 move_sound = pygame.mixer.Sound("sprites/move-self.mp3")
 capture_sound = pygame.mixer.Sound("sprites/capture.mp3")
 low_time_sound = pygame.mixer.Sound("sprites/lowtime.mp3")
+game_start_sound = pygame.mixer.Sound("sprites/game-start.mp3")
+game_end_sound = pygame.mixer.Sound("sprites/game-end.mp3")
 
 # Setting up the starting board state. 0 = empty, 1 = player 1, and 2 = player 2. 3 and 4 are player 1 and 2 but a king piece
 board_state = [
@@ -127,7 +129,9 @@ def win_screen(winner):
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if replay_button.collidepoint(event.pos):
+                    game_start_sound.play()
                     reset_game()
+
                     return  # back to game(), which keeps running with fresh state
 
                 if quit_button.collidepoint(event.pos):
@@ -274,6 +278,7 @@ def end_turn():
     if len(legal_moves) == 0:
         game_over = True
         winner = 1 if current_player == 2 else 2
+        game_end_sound.play()
 
 def is_promotion(end_row, piece):
     if piece == 1 or piece == 2:
@@ -419,7 +424,9 @@ def start_menu():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if play_button.collidepoint(mouse):
+                    game_start_sound.play()
                     game()
+
 
                 if quit_button.collidepoint(mouse):
                     pygame.quit()
