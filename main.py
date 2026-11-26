@@ -32,6 +32,11 @@ light_king_image = pygame.transform.scale(pygame.image.load("sprites/white_king.
 dark_pieces_image = pygame.transform.scale(pygame.image.load("sprites/black.png").convert_alpha(), (TILE_SIZE - 10, TILE_SIZE - 10))
 dark_king_image = pygame.transform.scale(pygame.image.load("sprites/black_king.png").convert_alpha(), (TILE_SIZE - 10, TILE_SIZE - 10))
 
+# Initializing the Sound Effects
+move_sound = pygame.mixer.Sound("sprites/move-self.mp3")
+capture_sound = pygame.mixer.Sound("sprites/capture.mp3")
+low_time_sound = pygame.mixer.Sound("sprites/lowtime.mp3")
+
 # Setting up the starting board state. 0 = empty, 1 = player 1, and 2 = player 2. 3 and 4 are player 1 and 2 but a king piece
 board_state = [
     [0, 2, 0, 2, 0, 2, 0, 2],
@@ -153,17 +158,24 @@ def get_square_from_mouse(pos):
 
 def move_piece(start_row, start_col, end_row, end_col):
     # Moves the value at the start pos to the end pos and empties the start pos
+    capture = False
     piece = board_state[start_row][start_col]
     board_state[start_row][start_col] = 0
 
     # Logic if the move is a capture
     if is_capture(start_row, start_col, end_row, end_col, piece):
         board_state[(start_row + end_row) // 2][(start_col + end_col) // 2] = 0
+        capture = True
     
     if is_promotion(end_row, piece):
         board_state[end_row][end_col] = piece + 2
     else:
         board_state[end_row][end_col] = piece
+
+    if capture:
+        capture_sound.play()
+    else:
+        move_sound.play()
 
 def is_legal_move(start_row, start_col, end_row, end_col, piece=0):
     # Checks if the proposed move is legal and returns True if it is legal and False if it isn't
@@ -339,7 +351,6 @@ def game():
                                 selected_piece = forced_piece
 
         if not game_over and player_types[current_player] == "ai":
-            pygame.time.wait(500)
             ai_move()
 
         # Rendering
@@ -352,6 +363,7 @@ def game():
 
         if game_over:
             win_screen(winner)
+            
         pygame.display.update()
 
 def reset_game():
