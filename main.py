@@ -145,7 +145,7 @@ def win_screen(winner):
     overlay.set_alpha(175)
 
     winner_text = FONT.render(label, True, (255, 255, 255))
-    winner_rect = winner_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+    winner_rect = winner_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
 
     replay_button = pygame.Rect(0, 0, 220, 80)
     replay_button.center = (WIDTH // 4, HEIGHT // 2)
