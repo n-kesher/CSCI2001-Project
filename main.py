@@ -39,6 +39,10 @@ light_king_image = pygame.transform.scale(pygame.image.load("sprites/white_king.
 dark_pieces_image = pygame.transform.scale(pygame.image.load("sprites/black.png").convert_alpha(), (TILE_SIZE - 10, TILE_SIZE - 10))
 dark_king_image = pygame.transform.scale(pygame.image.load("sprites/black_king.png").convert_alpha(), (TILE_SIZE - 10, TILE_SIZE - 10))
 
+LOGO_WIDTH = 96
+LOGO_HEIGHT = 96
+logo = pygame.transform.scale(pygame.image.load("logo.png").convert_alpha(), (LOGO_WIDTH, LOGO_HEIGHT))
+
 # Initializing the Sound Effects
 move_sound = pygame.mixer.Sound("sprites/move-self.mp3")
 capture_sound = pygame.mixer.Sound("sprites/capture.mp3")
@@ -464,7 +468,9 @@ def start_menu():
     label = "play vs: player"
 
     title_text = FONT.render("checkers", True, (255, 255, 255))
-    title_rect = title_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+    title_rect = title_text.get_rect(center=(WIDTH // 2 + LOGO_WIDTH // 2, HEIGHT // 4))
+
+    logo_rect =  logo.get_rect(center=(WIDTH // 4 + LOGO_WIDTH // 2, HEIGHT // 4))
 
     while True:
         # Event Handler
@@ -498,6 +504,7 @@ def start_menu():
         screen.blit(overlay, (0, 0))
 
         # Title
+        screen.blit(logo, logo_rect)
         screen.blit(title_text, title_rect)
 
         # Buttons
