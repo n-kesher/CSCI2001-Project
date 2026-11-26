@@ -35,6 +35,7 @@ dark_king_image = pygame.transform.scale(pygame.image.load("sprites/black_king.p
 # Initializing the Sound Effects
 move_sound = pygame.mixer.Sound("sprites/move-self.mp3")
 capture_sound = pygame.mixer.Sound("sprites/capture.mp3")
+low_time_sound = pygame.mixer.Sound("sprites/lowtime.mp3")
 
 # Setting up the starting board state. 0 = empty, 1 = player 1, and 2 = player 2. 3 and 4 are player 1 and 2 but a king piece
 board_state = [
