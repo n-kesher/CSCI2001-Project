@@ -2,12 +2,6 @@ import pygame
 import sys
 import random
 
-"""
-TO DO
-piece sounds?
-ai moves
-"""
-
 # Setup of the Game Window
 pygame.init()
 
@@ -15,13 +9,26 @@ ROWS, COLS = 8, 8
 TILE_SIZE = 80
 WIDTH = COLS * TILE_SIZE
 HEIGHT = ROWS * TILE_SIZE
+
 FONT = pygame.font.Font(pygame.font.match_font("arial"), 60)
+
+# Setup of the timers displayed in game
+TIMER_FONT = pygame.font.Font(pygame.font.match_font("arial"), 40)
+START_TIME_MS = 3 * 60 * 1000
+LOW_TIME_MS = 1 * 60 * 1000
+clock = pygame.time.Clock()
+
+time_left = {1: START_TIME_MS, 2: START_TIME_MS}
+low_time_played = {1: False, 2: False}
 
 # Game Parameters
 LIGHT_SQUARE = (237, 214, 176)
 DARK_SQUARE = (184, 135, 98)
 SELECTED_HIGHLIGHT_COLOR = (219, 195, 74)
 LAST_MOVE_HIGHLIGHT_COLOR = (0, 187, 255)
+
+icon = pygame.image.load("checkers_small.png")
+pygame.display.set_icon(icon)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("checkers")
@@ -88,7 +95,6 @@ def draw_highlight():
             rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)
             pygame.draw.rect(screen, SELECTED_HIGHLIGHT_COLOR, rect)
 
-
 def draw_last_move():
 
     if last_move is not None:
@@ -97,6 +103,32 @@ def draw_last_move():
         for row, col in [(start_row, start_col), (end_row, end_col)]:
             rect = pygame.Rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE)            
             pygame.draw.rect(screen, LAST_MOVE_HIGHLIGHT_COLOR, rect)
+
+def format_time(ms):
+    seconds = (max(0, ms) + 999) // 1000  # round up so it starts at 3:00
+    return f"{seconds // 60}:{seconds % 60:02d}"
+
+def draw_timers():
+    # Draws 2 timers, player 2's at the top right, and player 1's at the bottom right
+    for player, y in ((2, 10), (1, HEIGHT - 50)):
+        box = pygame.Rect(WIDTH - 130, y, 120, 40)
+        active = player == current_player and not game_over
+        low = time_left[player] <= LOW_TIME_MS
+
+
+        if low and active:
+            bg, fg, outline = (166, 42, 30), (255, 255, 255), (69, 15, 10)
+        elif low and not active:
+            bg, fg, outline = (133, 33, 24), (199, 199, 199), (69, 15, 10)
+        elif active:
+            bg, fg, outline = (255, 255, 255), (0, 0, 0), (0, 0, 0)
+        else:
+            bg, fg, outline = (0, 0, 0), (255, 255, 255), (255, 255, 255)
+
+        pygame.draw.rect(screen, bg, box)
+        pygame.draw.rect(screen, outline, box, width=2)
+        text = TIMER_FONT.render(format_time(time_left[player]), True, fg)
+        screen.blit(text, text.get_rect(center=box.center))
 
 def win_screen(winner):
     if winner == 1:
@@ -326,8 +358,24 @@ def perform_move(move):
 
 def game():
     # Performs the main gameloop
-    global selected_piece
+    global selected_piece, game_over, winner
+    clock.tick()
+
     while run:
+        dt = clock.tick(60)
+        # Timer
+        if not game_over and player_types[2] != "ai":
+            time_left[current_player] -= dt
+
+            if time_left[current_player] <= LOW_TIME_MS and not low_time_played[current_player]:
+                low_time_sound.play()
+                low_time_played[current_player] = True
+
+            if time_left[current_player] <= 0:
+                time_left[current_player] = 0
+                game_over = True
+                winner = 1 if current_player == 2 else 2
+
         # Setup of the Event Handler
         for event in pygame.event.get():
             # Listen for pressing the X button
@@ -365,14 +413,17 @@ def game():
         draw_highlight()
         draw_last_move()
         draw_pieces()
+        if player_types[2] != "ai":
+            draw_timers()
 
         if game_over:
             win_screen(winner)
+            clock.tick()
             
         pygame.display.update()
 
 def reset_game():
-    global board_state, current_player, forced_piece, last_move, legal_moves, selected_piece, game_over, winner
+    global board_state, current_player, forced_piece, last_move, legal_moves, selected_piece, game_over, winner, time_left, low_time_played
     board_state = [
         [0, 2, 0, 2, 0, 2, 0, 2],
         [2, 0, 2, 0, 2 ,0, 2, 0],
@@ -390,6 +441,8 @@ def reset_game():
     game_over = False
     winner = None
     legal_moves = get_legal_moves(current_player)
+    time_left = {1: START_TIME_MS, 2: START_TIME_MS}
+    low_time_played = {1: False, 2: False}
 
 
 def start_menu():
